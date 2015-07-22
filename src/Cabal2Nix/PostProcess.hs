@@ -13,7 +13,12 @@ postProcess deriv = foldr ($) deriv [ f | (Dependency n vr, f) <- hooks, package
 hooks :: [(Dependency, Derivation -> Derivation)]
 hooks = over (mapped._1) (\str -> fromMaybe (error ("invalid constraint: " ++ show str)) (simpleParse str))
   [ ("haddock", set phaseOverrides "preCheck = \"unset GHC_PACKAGE_PATH\";")
+  , ("jsaddle", set (libraryDepends . haskell . contains (dep "ghcjs-base")) False
+              . set (testDepends . haskell . contains (dep "ghcjs-base")) False)
   ]
+
+dep :: String -> Dependency
+dep s = Dependency (PackageName s) anyVersion
 
 {-
 fixGtkBuilds :: Derivation -> Derivation
@@ -125,7 +130,6 @@ postProcess' deriv@(MkDerivation {..})
 
   | pname == "hnetcdf"          = deriv { testDepends = Set.delete "netcdf" testDepends }
   | pname == "SDL2-ttf"         = deriv { buildDepends = Set.delete "SDL2" buildDepends }
-  | pname == "jsaddle"          = deriv { buildDepends = Set.delete "ghcjs-base" buildDepends, testDepends = Set.delete "ghcjs-base" testDepends }
   | pname == "hzk"              = deriv { testDepends = Set.delete "zookeeper_mt" testDepends, buildTools = Set.insert "zookeeper_mt" buildTools }
   | pname == "z3"               = deriv { phaseOverrides = "preBuild = stdenv.lib.optionalString stdenv.isDarwin \"export DYLD_LIBRARY_PATH=${z3}/lib\";" }
   | pname == "zip-archive"      = deriv { testDepends = Set.delete "zip" testDepends, buildTools = Set.insert "zip" buildTools }
