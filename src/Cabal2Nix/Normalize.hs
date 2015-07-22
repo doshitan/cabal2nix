@@ -1,6 +1,6 @@
-module Cabal2Nix.Normalize where
+module Cabal2Nix.Normalize ( normalize, normalizeCabalFlags ) where
 
--- import Cabal2Nix.CorePackages
+import Cabal2Nix.CorePackages
 import Cabal2Nix.Name
 import Control.Lens
 import Data.Char
@@ -9,6 +9,7 @@ import Data.List
 import Data.Set ( Set )
 import qualified Data.Set as Set
 import Distribution.Nixpkgs.Haskell
+import Distribution.Nixpkgs.Meta
 import Distribution.Nixpkgs.Util.Regex ( regsubmatch )
 import Distribution.Package
 import Distribution.PackageDescription ( FlagAssignment, FlagName(..) )
@@ -20,6 +21,7 @@ normalize drv = drv
   & over libraryDepends (normalizeBuildInfo (packageName drv))
   & over executableDepends (normalizeBuildInfo (packageName drv))
   & over testDepends (normalizeBuildInfo (packageName drv))
+  & over metaSection normalizeMeta
 
 normalizeBuildInfo :: PackageName -> BuildInfo -> BuildInfo
 normalizeBuildInfo pname bi = bi
@@ -35,14 +37,12 @@ normalizeBuildInfo pname bi = bi
   , cabalFlags   = normalizeCabalFlags cabalFlags
   , metaSection  = normalizeMeta metaSection
   }
+-}
 
 normalizeMeta :: Meta -> Meta
-normalizeMeta = meta@(Meta {..}) = meta
-  { description = normalizeSynopsis description
-  , maintainers = normalizeMaintainers maintainers
-  , platforms   = normalizePlatforms platforms
-  }
--}
+normalizeMeta = over description normalizeSynopsis
+              . over maintainers normalizeMaintainers
+              . over platforms normalizePlatforms
 
 normalizeSynopsis :: String -> String
 normalizeSynopsis desc

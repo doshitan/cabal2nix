@@ -93,7 +93,7 @@ cabal2nix' PackageDescription {..} = normalize $ postProcess $
   & editedCabalFile .~ (if xrev > 0 then fromJust (lookup "x-cabal-file-hash" customFieldsPD) else "")
   & metaSection .~ ( nullMeta
                    & Nix.homepage .~ homepage
-                   & Nix.description .~ normalizeSynopsis synopsis
+                   & Nix.description .~ synopsis
                    & Nix.license .~ fromCabalLicense license
                    & Nix.platforms .~ mempty
                    & Nix.hydraPlatforms .~ mempty
