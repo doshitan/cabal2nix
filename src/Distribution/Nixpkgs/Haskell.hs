@@ -64,6 +64,8 @@ data Derivation = MkDerivation
 
 makeLenses ''Derivation
 
+makeLensesFor [("_libraryDepends", "dependencies"), ("_executableDepends", "dependencies"), ("_testDepends", "dependencies")] ''Derivation
+
 instance Package Derivation where
   packageId = _pkgid
 

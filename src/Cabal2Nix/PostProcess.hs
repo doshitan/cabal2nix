@@ -13,8 +13,8 @@ postProcess deriv = foldr ($) deriv [ f | (Dependency n vr, f) <- hooks, package
 hooks :: [(Dependency, Derivation -> Derivation)]
 hooks = over (mapped._1) (\str -> fromMaybe (error ("invalid constraint: " ++ show str)) (simpleParse str))
   [ ("haddock", set phaseOverrides "preCheck = \"unset GHC_PACKAGE_PATH\";")
-  , ("jsaddle", set (libraryDepends . haskell . contains (dep "ghcjs-base")) False
-              . set (testDepends . haskell . contains (dep "ghcjs-base")) False)
+  , ("jsaddle", set (dependencies . haskell . contains (dep "ghcjs-base")) False)
+  , ("dns", set testTarget "spec")      -- don't execute tests that try to access the network
   ]
 
 dep :: String -> Dependency
@@ -43,7 +43,6 @@ postProcess' deriv@(MkDerivation {..})
   | pname == "cabal-install" && version >= Version [0,14] []
                                 = deriv { phaseOverrides = cabalInstallPostInstall }
   | pname == "darcs"            = deriv { phaseOverrides = darcsInstallPostInstall }
-  | pname == "dns"              = deriv { testTarget = "spec" }
   | pname == "editline"         = deriv { extraLibs = Set.insert "libedit" extraLibs }
   | pname == "epic"             = deriv { extraLibs = Set.insert "gmp" (Set.insert "boehmgc" extraLibs)
                                         , buildTools = Set.insert "happy" buildTools
