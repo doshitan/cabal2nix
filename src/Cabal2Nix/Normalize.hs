@@ -3,7 +3,6 @@ module Cabal2Nix.Normalize ( normalize, normalizeCabalFlags ) where
 import Cabal2Nix.CorePackages
 import Cabal2Nix.Name
 import Control.Lens
-import Data.Char
 import Data.Function
 import Data.List
 import Data.Set ( Set )
@@ -55,17 +54,14 @@ quote ('"':cs)    = '\\' : '"' : quote cs
 quote (c:cs)      = c : quote cs
 quote []          = []
 
-normalizeList :: [String] -> [String]
-normalizeList = nub . sortBy (compare `on` map toLower) . filter (not . null)
-
 normalizeSet :: Set String -> Set String
 normalizeSet = Set.filter (not . null)
 
-normalizeNixNames :: Set String -> Set String
-normalizeNixNames = normalizeSet . Set.map toNixName
+-- normalizeNixNames :: Set String -> Set String
+-- normalizeNixNames = normalizeSet . Set.map toNixName
 
-normalizeNixLibs :: Set String -> Set String
-normalizeNixLibs = normalizeSet . Set.fromList . concatMap libNixName . Set.toList
+-- normalizeNixLibs :: Set String -> Set String
+-- normalizeNixLibs = normalizeSet . Set.fromList . concatMap libNixName . Set.toList
 
 normalizeNixBuildTools :: Set Dependency -> Set Dependency
 normalizeNixBuildTools = Set.fromList . concatMap buildToolNixName' . Set.toList
