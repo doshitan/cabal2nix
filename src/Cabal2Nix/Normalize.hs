@@ -22,20 +22,19 @@ normalize drv = drv
   & over executableDepends (normalizeBuildInfo (packageName drv))
   & over testDepends (normalizeBuildInfo (packageName drv))
   & over metaSection normalizeMeta
+  & over cabalFlags normalizeCabalFlags
 
 normalizeBuildInfo :: PackageName -> BuildInfo -> BuildInfo
 normalizeBuildInfo pname bi = bi
   & haskell . contains (Dependency pname anyVersion) .~ False
+  & tool %~ normalizeNixBuildTools . Set.filter (\(Dependency (PackageName n) _) -> n `notElem` coreBuildTools)
 
   {-
-  { buildDepends = normalizeNixNames (
+  {
   , testDepends  = normalizeNixNames (Set.delete pname testDepends)
-  , buildTools   = normalizeNixBuildTools (Set.filter (`notElem` coreBuildTools) buildTools)
   , extraLibs    = normalizeNixLibs extraLibs
   , pkgConfDeps  = normalizeNixLibs pkgConfDeps
   , configureFlags = normalizeSet configureFlags
-  , cabalFlags   = normalizeCabalFlags cabalFlags
-  , metaSection  = normalizeMeta metaSection
   }
 -}
 
@@ -68,8 +67,11 @@ normalizeNixNames = normalizeSet . Set.map toNixName
 normalizeNixLibs :: Set String -> Set String
 normalizeNixLibs = normalizeSet . Set.fromList . concatMap libNixName . Set.toList
 
-normalizeNixBuildTools :: Set String -> Set String
-normalizeNixBuildTools = normalizeSet . Set.fromList . concatMap buildToolNixName . Set.toList
+normalizeNixBuildTools :: Set Dependency -> Set Dependency
+normalizeNixBuildTools = Set.fromList . concatMap buildToolNixName' . Set.toList
+  where
+    buildToolNixName' :: Dependency -> [Dependency]
+    buildToolNixName' (Dependency (PackageName n) vr) = [ Dependency (PackageName n') vr | n' <- buildToolNixName n ]
 
 -- |Strip any kind of path prefix from maintainer names, filter duplicates, and
 -- sort the resulting list alphabetically.
